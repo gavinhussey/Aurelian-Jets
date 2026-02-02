@@ -326,7 +326,7 @@ h4 {
 .hero-bg {
     position: absolute;
     inset: 0;
-    background-image: url('images/jakob-rosen-Emvf_emPMdY-unsplash.jpg'), url('https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1920&q=85');
+    background-image: url('images/jakob-rosen-Emvf_emPMdY-unsplash.jpg?v=2');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -529,7 +529,7 @@ h4 {
 .what-we-do-bg {
     position: absolute;
     inset: 0;
-    background-image: url('images/ChatGPT%20Image%20Feb%201%2C%202026%2C%2009_29_08%20PM.png'), url('https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1600&q=85');
+    background-image: url('images/ChatGPT%20Image%20Feb%201%2C%202026%2C%2009_29_08%20PM.png?v=2'), url('https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1600&q=85');
     background-size: cover;
     background-position: center right;
     background-repeat: no-repeat;
@@ -643,7 +643,7 @@ h4 {
 .how-it-works-bg {
     position: absolute;
     inset: 0;
-    background-image: url('images/ChatGPT%20Image%20Feb%201%2C%202026%2C%2009_56_18%20PM.png'), url('https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1600&q=85');
+    background-image: url('images/ChatGPT%20Image%20Feb%201%2C%202026%2C%2009_56_18%20PM.png?v=2'), url('https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1600&q=85');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
