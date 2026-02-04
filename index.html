@@ -592,7 +592,7 @@
                 try {
                     // Replace with your Google Apps Script Web App URL
                     // Get this URL after deploying the Apps Script (see GOOGLE_SHEETS_SETUP.md)
-                    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxzuITn376ssCXcZufY3Zyn-wCCHbItNTj42kMB3-4iSo_cBm0X3HsU4290C1EaI8_yQ/exec';
+                    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxC2bgGQRN3Kwjr1RVDH0FBrRX1CCFF5mubnA55meGOYfN84C8KuKrFEOObgKlICTKn6w/exec';
                     
                     // Check if URL is configured
                     if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
@@ -622,16 +622,17 @@
                     }
                     
                     // Submit to Google Sheets via Apps Script
-                    // Send as JSON (preferred method)
+                    // Send as form-urlencoded so script receives all fields (city, state, phone)
                     try {
                         console.log('Submitting form data:', data);
+                        const formBody = new URLSearchParams(data).toString();
                         const response = await fetch(GOOGLE_SCRIPT_URL, {
                             method: 'POST',
                             mode: 'no-cors',
                             headers: {
-                                'Content-Type': 'application/json',
+                                'Content-Type': 'application/x-www-form-urlencoded',
                             },
-                            body: JSON.stringify(data)
+                            body: formBody
                         });
                         
                         console.log('Form submitted successfully');

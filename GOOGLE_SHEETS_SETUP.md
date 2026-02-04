@@ -4,34 +4,38 @@
 
 ### Step 1: Prepare Your Google Sheet
 
-1. Open your Google Sheet: https://docs.google.com/spreadsheets/d/1u3G0w-9x37bXEuY1xZK4zwWpudgT0WopR_-l2byeZT0/edit
-2. Create a sheet named exactly: **"Aurelian Air — Early Access"**
-3. Set up these columns in the first row (in this exact order):
-   - Timestamp
-   - Full Name
-   - Email Address
-   - Primary Route (City → City)
-   - Preferred Travel Window
-   - Number of Passengers
-   - Source
-   - Status
+1. Open your Google Sheet (or create a new one).
+2. Create a sheet tab named exactly: **"Aurelian Air — Early Access"** (or update `SHEET_NAME` in the script to match your tab name).
+3. Set up these columns in **row 1** in this exact order:
+
+   | A | B | C | D | E | F | G | H |
+   |---|---|-------|-----|------|--------------|--------|--------|
+   | **Timestamp** | **Full Name** | **Email Address** | **City** | **State** | **Phone Number** | **Source** | **Status** |
+
+   - **Timestamp** — When the request was submitted (filled by the form)
+   - **Full Name** — Required
+   - **Email Address** — Required
+   - **City** — Optional
+   - **State** — Optional
+   - **Phone Number** — Optional
+   - **Source** — Auto-filled (e.g. AurelianJets.com)
+   - **Status** — Leave blank for your own use
 
 ### Step 2: Create Google Apps Script
 
 1. In your Google Sheet, go to **Extensions** > **Apps Script**
 2. Delete any existing code
-3. Copy the entire contents of `google-apps-script.js` file
+3. Copy the entire contents of **`google-apps-script.js`** from this project
 4. Paste it into the Apps Script editor
-5. **IMPORTANT**: Update line 15 with your actual Spreadsheet ID:
+5. **Update the Spreadsheet ID** (around line 21):
+   - In your sheet URL: `https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit`
+   - Set: `const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID';`
+6. **Optional:** Set your email for new-request notifications (around line 291):
    ```javascript
-   const SPREADSHEET_ID = '1u3G0w-9x37bXEuY1xZK4zwWpudgT0WopR_-l2byeZT0';
-   ```
-6. **OPTIONAL**: Update line 95 with your email for notifications:
-   ```javascript
-   const recipientEmail = 'your-email@example.com';
+   var recipientEmail = 'your-email@example.com';
    ```
 7. Save the project (Ctrl+S or Cmd+S)
-8. Name it "Aurelian Air Form Handler"
+8. Name the project (e.g. "Aurelian Jets Form Handler")
 
 ### Step 3: Deploy as Web App
 
@@ -39,62 +43,51 @@
 2. Click the gear icon ⚙️ next to "Select type"
 3. Choose **Web app**
 4. Configure:
-   - **Description**: "Aurelian Air Form Handler"
-   - **Execute as**: **Me** (your account)
-   - **Who has access**: **Anyone** (this allows the form to submit)
+   - **Description:** e.g. "Aurelian Jets Form Handler"
+   - **Execute as:** **Me**
+   - **Who has access:** **Anyone** (so the website can submit)
 5. Click **Deploy**
-6. **Copy the Web App URL** (you'll need this)
+6. **Copy the Web App URL**
 
 ### Step 4: Update index.html
 
-1. Open `index.html`
-2. Find this line (around line 520):
-   ```javascript
-   const GOOGLE_SCRIPT_URL = '1rHqxDHisVSc22xPAEwhHgSQtuDlikoKNMs7sxdNfa_ikiqAXYHv5lKPz';
-   ```
-3. Replace `YOUR_GOOGLE_APPS_SCRIPT_URL_HERE` with the Web App URL you copied
+1. Open **`index.html`**
+2. Find the line with `GOOGLE_SCRIPT_URL` (around line 595)
+3. Replace the URL with the Web App URL you copied
 4. Save the file
 
 ### Step 5: Test
 
-1. Open `index.html` in your browser
-2. Fill out the form
-3. Submit
-4. Check your Google Sheet - a new row should appear
+1. Open your site (or `index.html` locally)
+2. Fill out the form: **Full Name**, **Email Address**, and optionally City, State, Phone
+3. Click **Request Access**
+4. Check your Google Sheet — a new row should appear with the same data
+
+---
+
+## Form fields (current)
+
+The site sends:
+
+- **Full Name** * (required)
+- **Email Address** * (required)
+- **City** (optional)
+- **State** (optional)
+- **Phone Number** (optional)
+
+Plus: **Timestamp**, **Source** (AurelianJets.com), and **Status** (empty).
+
+---
 
 ## Troubleshooting
 
-**Form doesn't submit:**
-- Check browser console for errors (F12)
-- Verify the Web App URL is correct
-- Make sure Apps Script is deployed as "Anyone" can access
+- **Form doesn’t submit:** Check the browser console (F12), confirm the Web App URL in `index.html`, and that the Apps Script is deployed with "Anyone" access.
+- **Data not in sheet:** Check the sheet tab name matches `SHEET_NAME` in the script, and that the **first row** has the column headers in the order above.
+- **Wrong columns:** Ensure the script’s `COLUMNS` array in `google-apps-script.js` matches the headers in your sheet exactly.
 
-**Data not appearing in sheet:**
-- Verify sheet name matches exactly: "Aurelian Air — Early Access"
-- Check that column headers are in the correct order
-- Look at Apps Script execution log (View > Executions)
+---
 
-**Email notifications not working:**
-- Make sure you set your email in the script
-- Check Apps Script execution log for errors
-- Email notifications are optional and won't break form submission if they fail
+## Security
 
-## Security Notes
-
-- The Web App URL is public but only accepts POST requests
-- No authentication required for form submission
-- Data is written directly to your Google Sheet
-- Sheet should remain private (not publicly shared)
-
-## Column Structure
-
-The script expects these columns in this exact order:
-
-1. Timestamp (auto-filled)
-2. Full Name
-3. Email Address
-4. Primary Route (City → City)
-5. Preferred Travel Window
-6. Number of Passengers
-7. Source (auto-filled as "AurelianAir.com")
-8. Status (left blank)
+- The Web App URL is public; the script only handles POST requests and appends rows.
+- Keep the Google Sheet private; only you (and anyone you share it with) can see the data.

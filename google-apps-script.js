@@ -26,9 +26,9 @@ const COLUMNS = [
   'Timestamp',
   'Full Name',
   'Email Address',
-  'Primary Route (City → City)',
-  'Preferred Travel Window',
-  'Number of Passengers',
+  'City',
+  'State',
+  'Phone Number',
   'Source',
   'Status'
 ];
@@ -50,10 +50,10 @@ function doPost(e) {
         timestamp: params.timestamp || new Date().toISOString(),
         name: params.name || '',
         email: params.email || '',
-        route: params.route || '',
-        window: params.window || '',
-        passengers: params.passengers || '',
-        source: params.source || 'AurelianAir.com',
+        city: params.city || '',
+        state: params.state || '',
+        phone: params.phone || '',
+        source: params.source || 'AurelianJets.com',
         status: params.status || ''
       };
     } else {
@@ -67,10 +67,10 @@ function doPost(e) {
           timestamp: params.timestamp || new Date().toISOString(),
           name: params.name || '',
           email: params.email || '',
-          route: params.route || '',
-          window: params.window || '',
-          passengers: params.passengers || '',
-          source: params.source || 'AurelianAir.com',
+          city: params.city || '',
+          state: params.state || '',
+          phone: params.phone || '',
+          source: params.source || 'AurelianJets.com',
           status: params.status || ''
         };
       }
@@ -81,14 +81,14 @@ function doPost(e) {
     
     // Prepare row data in exact column order
     const rowData = [
-      new Date(), // Timestamp (auto-generated)
+      data.timestamp || new Date(),
       data.name || '',
       data.email || '',
-      data.route || '',
-      data.window || '',
-      data.passengers || '',
-      data.source || 'AurelianAir.com',
-      '' // Status (leave blank)
+      data.city || '',
+      data.state || '',
+      data.phone || '',
+      data.source || 'AurelianJets.com',
+      data.status || ''
     ];
     
     // Append row to sheet
@@ -96,7 +96,7 @@ function doPost(e) {
     
     // Format the new row to match enhanced sheet styling
     const newRowNum = sheet.getLastRow();
-    const newRowRange = sheet.getRange(newRowNum, 1, 1, COLUMNS.length);
+    const newRowRange = sheet.getRange(newRowNum, 1, newRowNum, COLUMNS.length);
     
     // Alternate row color (matching formatSheet function)
     if (newRowNum % 2 === 0) {
@@ -126,8 +126,10 @@ function doPost(e) {
     emailCell.setFontStyle('italic');
     emailCell.setFontColor('#d4af37'); // Gold for emails
     
-    // Format route - standard color
+    // Format city, state, phone - standard color
     sheet.getRange(newRowNum, 4).setFontColor('#e8e8e8');
+    sheet.getRange(newRowNum, 5).setFontColor('#e8e8e8');
+    sheet.getRange(newRowNum, 6).setFontColor('#e8e8e8');
     
     // Center align status - muted
     const statusCell = sheet.getRange(newRowNum, 8);
@@ -224,11 +226,11 @@ function formatSheet(sheet) {
   sheet.setColumnWidth(1, 200); // Timestamp - wider for readability
   sheet.setColumnWidth(2, 220); // Full Name
   sheet.setColumnWidth(3, 280); // Email Address - wider for full emails
-  sheet.setColumnWidth(4, 320); // Primary Route - wider for longer routes
-  sheet.setColumnWidth(5, 200); // Preferred Travel Window
-  sheet.setColumnWidth(6, 170); // Number of Passengers
+  sheet.setColumnWidth(4, 160); // City
+  sheet.setColumnWidth(5, 120); // State
+  sheet.setColumnWidth(6, 180); // Phone Number
   sheet.setColumnWidth(7, 160); // Source
-  sheet.setColumnWidth(8, 140); // Status - wider for better visibility
+  sheet.setColumnWidth(8, 140); // Status
   
   // Format data rows (if any exist)
   if (numRows > 1) {
@@ -257,21 +259,20 @@ function formatSheet(sheet) {
     timestampRange.setFontSize(10); // Slightly smaller for timestamps
     
     // Format email column (Column 3) - enhanced styling
-    const emailRange = sheet.getRange(2, 3, numRows - 1, 1);
+    const emailRange = sheet.getRange(2, 3, numRows, 3);
     emailRange.setFontStyle('italic');
     emailRange.setFontColor('#d4af37'); // Gold color for emails (clickable feel)
     
     // Format name column (Column 2) - make it stand out
-    const nameRange = sheet.getRange(2, 2, numRows - 1, 1);
+    const nameRange = sheet.getRange(2, 2, numRows, 2);
     nameRange.setFontWeight('normal');
     nameRange.setFontColor('#f0f0f0'); // Brighter for names
     
-    // Format route column (Column 4) - important data
-    const routeRange = sheet.getRange(2, 4, numRows - 1, 1);
-    routeRange.setFontColor('#e8e8e8');
+    // Format city/state/phone columns (4, 5, 6)
+    sheet.getRange(2, 4, numRows, 6).setFontColor('#e8e8e8');
     
     // Center align Status column (Column 8)
-    const statusRange = sheet.getRange(2, 8, numRows - 1, 1);
+    const statusRange = sheet.getRange(2, 8, numRows, 8);
     statusRange.setHorizontalAlignment('center');
     statusRange.setFontColor('#b8b8b8'); // Muted for status (empty initially)
   }
@@ -298,23 +299,23 @@ function sendInternalNotification(data) {
       return; // Skip if email not configured
     }
     
-    var subject = 'New Aurelian Air Access Request';
+    var subject = 'New Aurelian Jets Access Request';
     var name = data.name || 'N/A';
     var email = data.email || 'N/A';
-    var route = data.route || 'N/A';
-    var window = data.window || 'N/A';
-    var passengers = data.passengers || 'N/A';
-    var source = data.source || 'AurelianAir.com';
+    var city = data.city || '';
+    var state = data.state || '';
+    var phone = data.phone || '';
+    var source = data.source || 'AurelianJets.com';
     
     var body = 'New access request received:\n\n';
     body += 'Full Name: ' + name + '\n';
     body += 'Email: ' + email + '\n';
-    body += 'Primary Route: ' + route + '\n';
-    body += 'Preferred Travel Window: ' + window + '\n';
-    body += 'Number of Passengers: ' + passengers + '\n';
+    body += 'City: ' + (city || '—') + '\n';
+    body += 'State: ' + (state || '—') + '\n';
+    body += 'Phone: ' + (phone || '—') + '\n';
     body += 'Source: ' + source + '\n\n';
     body += '---\n';
-    body += 'This is an automated notification from Aurelian Air form submission.';
+    body += 'This is an automated notification from Aurelian Jets form submission.';
     
     MailApp.sendEmail({
       to: recipientEmail,
