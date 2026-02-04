@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Operations | Internal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {} },
+      darkMode: 'class'
+    }
+  </script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; }
+    .status-scheduled { background-color: #4b5563; color: #e5e7eb; }
+    .status-inair { background-color: #1e40af; color: #e0e7ff; }
+    .status-completed { background-color: #166534; color: #dcfce7; }
+    .status-canceled { background-color: #991b1b; color: #fee2e2; }
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #374151; }
+  </style>
+</head>
+<body class="bg-[#0a0a0a] text-gray-200 min-h-screen">
+  <div class="max-w-[1400px] mx-auto px-6 py-8">
+    <!-- Header -->
+    <header class="mb-8">
+      <h1 class="text-xl font-semibold text-white tracking-tight">Flight Operations</h1>
+      <div class="mt-2 h-px bg-gray-700 w-full"></div>
+      <p class="mt-2 text-xs text-gray-500">Internal Use Only</p>
+    </header>
+
+    <!-- Toolbar: Add Flight, Filters, Search -->
+    <div class="flex flex-wrap items-center gap-4 mb-6">
+      <button type="button" id="btn-add" class="px-4 py-2 bg-gray-700 text-gray-200 text-sm font-medium rounded hover:bg-gray-600">
+        Add Flight
+      </button>
+      <select id="filter-status" class="bg-[#111] border border-gray-700 text-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500">
+        <option value="">All statuses</option>
+        <option value="Scheduled">Scheduled</option>
+        <option value="In Air">In Air</option>
+        <option value="Completed">Completed</option>
+        <option value="Canceled">Canceled</option>
+      </select>
+      <input type="date" id="filter-date" class="bg-[#111] border border-gray-700 text-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500">
+      <input type="text" id="search" placeholder="Search client or flight number…" class="bg-[#111] border border-gray-700 text-gray-300 rounded px-3 py-2 text-sm min-w-[220px] focus:outline-none focus:border-gray-500 placeholder-gray-500">
+    </div>
+
+    <!-- Table -->
+    <div class="border border-gray-700 rounded overflow-hidden">
+      <div class="overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
+        <table class="w-full text-sm">
+          <thead class="sticky top-0 bg-[#111] z-10">
+            <tr>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Flight ID</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Date</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Client Name</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Aircraft Type</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Departure</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Arrival</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Flight Number</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Status</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700">Notes</th>
+              <th class="text-left py-3 px-4 font-medium text-gray-400 border-b border-gray-700 w-24">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Rows rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Flight -->
+  <div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4" aria-hidden="true">
+    <div class="bg-[#111] border border-gray-700 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
+      <div class="p-6 border-b border-gray-700">
+        <h2 id="modal-title" class="text-lg font-medium text-white">Add Flight</h2>
+      </div>
+      <form id="flight-form" class="p-6 space-y-4">
+        <input type="hidden" id="flight-id">
+        <div>
+          <label for="date" class="block text-xs text-gray-500 mb-1">Date</label>
+          <input type="date" id="date" required class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500">
+        </div>
+        <div>
+          <label for="clientName" class="block text-xs text-gray-500 mb-1">Client Name</label>
+          <input type="text" id="clientName" required placeholder="Client name" class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 placeholder-gray-500">
+        </div>
+        <div>
+          <label for="aircraftType" class="block text-xs text-gray-500 mb-1">Aircraft Type</label>
+          <input type="text" id="aircraftType" required placeholder="e.g. Gulfstream G650" class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 placeholder-gray-500">
+        </div>
+        <div>
+          <label for="departure" class="block text-xs text-gray-500 mb-1">Departure Airport (ICAO / IATA)</label>
+          <input type="text" id="departure" required placeholder="e.g. KJFK" class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 placeholder-gray-500">
+        </div>
+        <div>
+          <label for="arrival" class="block text-xs text-gray-500 mb-1">Arrival Airport (ICAO / IATA)</label>
+          <input type="text" id="arrival" required placeholder="e.g. KLAX" class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 placeholder-gray-500">
+        </div>
+        <div>
+          <label for="flightNumber" class="block text-xs text-gray-500 mb-1">Flight Number</label>
+          <input type="text" id="flightNumber" required placeholder="e.g. AJ101" class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 placeholder-gray-500">
+        </div>
+        <div>
+          <label for="status" class="block text-xs text-gray-500 mb-1">Status</label>
+          <select id="status" class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500">
+            <option value="Scheduled">Scheduled</option>
+            <option value="In Air">In Air</option>
+            <option value="Completed">Completed</option>
+            <option value="Canceled">Canceled</option>
+          </select>
+        </div>
+        <div>
+          <label for="notes" class="block text-xs text-gray-500 mb-1">Notes</label>
+          <textarea id="notes" rows="2" placeholder="Optional notes" class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 placeholder-gray-500 resize-none"></textarea>
+        </div>
+      </form>
+      <div class="p-6 border-t border-gray-700 flex justify-between">
+        <button type="button" id="btn-modal-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 text-sm">Cancel</button>
+        <button type="submit" form="flight-form" class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded hover:bg-gray-500">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirmation -->
+  <div id="confirm-delete" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4" aria-hidden="true">
+    <div class="bg-[#111] border border-gray-700 rounded-lg p-6 max-w-sm w-full">
+      <p class="text-gray-200 text-sm mb-4">Delete this flight? This cannot be undone.</p>
+      <div class="flex justify-end gap-2">
+        <button type="button" id="btn-delete-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 text-sm">Cancel</button>
+        <button type="button" id="btn-delete-confirm" class="px-4 py-2 bg-red-900/80 text-red-100 text-sm rounded hover:bg-red-800">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'aurelian_flight_ops';
+    const MOCK = [
+      { id: 'AJ-001', date: '2026-02-05', clientName: 'Acme Corp', aircraftType: 'Gulfstream G650', departure: 'KJFK', arrival: 'KLAX', flightNumber: 'AJ101', status: 'Scheduled', notes: '' },
+      { id: 'AJ-002', date: '2026-02-04', clientName: 'Smith Holdings', aircraftType: 'Citation X', departure: 'KORD', arrival: 'KMIA', flightNumber: 'AJ102', status: 'Completed', notes: 'On time' },
+      { id: 'AJ-003', date: '2026-02-06', clientName: 'Delta Partners', aircraftType: 'Global 7500', departure: 'KLAX', arrival: 'TEB', flightNumber: 'AJ103', status: 'Scheduled', notes: '' }
+    ];
+
+    let flights = [];
+    let nextId = 4;
+    let editId = null;
+    let deleteId = null;
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          flights = parsed.flights || [];
+          nextId = parsed.nextId != null ? parsed.nextId : nextId;
+        } else {
+          flights = MOCK.map(f => ({ ...f }));
+        }
+      } catch (_) {
+        flights = MOCK.map(f => ({ ...f }));
+      }
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ flights, nextId }));
+    }
+
+    function generateId() {
+      return 'AJ-' + String(nextId++).padStart(3, '0');
+    }
+
+    function statusClass(s) {
+      const map = { 'Scheduled': 'status-scheduled', 'In Air': 'status-inair', 'Completed': 'status-completed', 'Canceled': 'status-canceled' };
+      return map[s] || 'status-scheduled';
+    }
+
+    function filterFlights() {
+      const statusVal = document.getElementById('filter-status').value;
+      const dateVal = document.getElementById('filter-date').value;
+      const q = (document.getElementById('search').value || '').trim().toLowerCase();
+      return flights.filter(f => {
+        if (statusVal && f.status !== statusVal) return false;
+        if (dateVal && f.date !== dateVal) return false;
+        if (q && !f.clientName.toLowerCase().includes(q) && !(f.flightNumber || '').toLowerCase().includes(q)) return false;
+        return true;
+      });
+    }
+
+    function render() {
+      const list = filterFlights();
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = list.map(f => `
+        <tr class="hover:bg-[#0f0f0f]">
+          <td class="py-3 px-4 text-gray-400">${escapeHtml(f.id)}</td>
+          <td class="py-3 px-4">${escapeHtml(f.date)}</td>
+          <td class="py-3 px-4">${escapeHtml(f.clientName)}</td>
+          <td class="py-3 px-4">${escapeHtml(f.aircraftType)}</td>
+          <td class="py-3 px-4">${escapeHtml(f.departure)}</td>
+          <td class="py-3 px-4">${escapeHtml(f.arrival)}</td>
+          <td class="py-3 px-4">${escapeHtml(f.flightNumber)}</td>
+          <td class="py-3 px-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-medium ${statusClass(f.status)}">${escapeHtml(f.status)}</span></td>
+          <td class="py-3 px-4 text-gray-500 max-w-[200px] truncate" title="${escapeHtml(f.notes)}">${escapeHtml(f.notes)}</td>
+          <td class="py-3 px-4">
+            <button type="button" class="text-gray-500 hover:text-gray-300 text-xs mr-2 edit-btn" data-id="${escapeHtml(f.id)}">Edit</button>
+            <button type="button" class="text-gray-500 hover:text-red-400 text-xs delete-btn" data-id="${escapeHtml(f.id)}">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn.getAttribute('data-id')));
+      });
+      tbody.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => confirmDelete(btn.getAttribute('data-id')));
+      });
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    const modalEl = document.getElementById('modal');
+    const form = document.getElementById('flight-form');
+    const modalTitle = document.getElementById('modal-title');
+
+    function openModal(id) {
+      editId = id || null;
+      modalTitle.textContent = id ? 'Edit Flight' : 'Add Flight';
+      if (id) {
+        const f = flights.find(x => x.id === id);
+        if (!f) return;
+        document.getElementById('flight-id').value = f.id;
+        document.getElementById('date').value = f.date;
+        document.getElementById('clientName').value = f.clientName;
+        document.getElementById('aircraftType').value = f.aircraftType;
+        document.getElementById('departure').value = f.departure;
+        document.getElementById('arrival').value = f.arrival;
+        document.getElementById('flightNumber').value = f.flightNumber;
+        document.getElementById('status').value = f.status;
+        document.getElementById('notes').value = f.notes || '';
+      } else {
+        document.getElementById('flight-id').value = '';
+        form.reset();
+        document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+      }
+      modalEl.classList.remove('hidden');
+      modalEl.classList.add('flex');
+    }
+
+    function closeModal() {
+      modalEl.classList.add('hidden');
+      modalEl.classList.remove('flex');
+      editId = null;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('flight-id').value;
+      const payload = {
+        date: document.getElementById('date').value,
+        clientName: document.getElementById('clientName').value.trim(),
+        aircraftType: document.getElementById('aircraftType').value.trim(),
+        departure: document.getElementById('departure').value.trim(),
+        arrival: document.getElementById('arrival').value.trim(),
+        flightNumber: document.getElementById('flightNumber').value.trim(),
+        status: document.getElementById('status').value,
+        notes: document.getElementById('notes').value.trim()
+      };
+      if (id) {
+        const idx = flights.findIndex(x => x.id === id);
+        if (idx !== -1) flights[idx] = { ...flights[idx], ...payload };
+      } else {
+        flights.push({ id: generateId(), ...payload });
+      }
+      save();
+      render();
+      closeModal();
+    });
+
+    document.getElementById('btn-add').addEventListener('click', () => openModal());
+    document.getElementById('btn-modal-cancel').addEventListener('click', closeModal);
+
+    const confirmEl = document.getElementById('confirm-delete');
+    function confirmDelete(id) {
+      deleteId = id;
+      confirmEl.classList.remove('hidden');
+      confirmEl.classList.add('flex');
+    }
+    function closeConfirm() {
+      confirmEl.classList.add('hidden');
+      confirmEl.classList.remove('flex');
+      deleteId = null;
+    }
+    document.getElementById('btn-delete-cancel').addEventListener('click', closeConfirm);
+    document.getElementById('btn-delete-confirm').addEventListener('click', () => {
+      if (deleteId) {
+        flights = flights.filter(f => f.id !== deleteId);
+        save();
+        render();
+      }
+      closeConfirm();
+    });
+
+    document.getElementById('filter-status').addEventListener('change', render);
+    document.getElementById('filter-date').addEventListener('change', render);
+    document.getElementById('search').addEventListener('input', render);
+
+    load();
+    render();
+  </script>
+</body>
+</html>
